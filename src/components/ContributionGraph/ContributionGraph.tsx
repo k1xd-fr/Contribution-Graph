@@ -11,14 +11,11 @@ interface DayProps {
   contributions: number;
 }
 
-class ContributionDay extends React.Component<
-  DayProps,
-  { isClicked: boolean }
-> {
+class ContributionDay extends React.Component<DayProps, { selected: boolean }> {
   constructor(props: DayProps) {
     super(props);
     this.state = {
-      isClicked: false,
+      selected: false,
     };
   }
 
@@ -32,45 +29,56 @@ class ContributionDay extends React.Component<
     else return "#254E77";
   }
 
-  private getTooltipText(): string {
-    const { contributions } = this.props;
+  private getTooltipText(): JSX.Element {
+    const { contributions, date } = this.props;
 
-    if (contributions === 0) return "No contributions";
+    if (contributions === 0) return <div>No contributions</div>;
     else if (contributions <= 9)
-      return `${contributions} contributions\n${format(
-        parseISO(this.props.date),
-        "EEEE, MMMM d, yyyy"
-      )}`;
+      return (
+        <div className="tooltip">
+          <span className="tooltip__title">{contributions} contributions</span>
+          <span className="tooltip__date">
+            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+          </span>
+        </div>
+      );
     else if (contributions <= 19)
-      return `${contributions} contributions\n${format(
-        parseISO(this.props.date),
-        "EEEE, MMMM d, yyyy"
-      )}`;
+      return (
+        <div className="tooltip">
+          <h4 className="tooltip__title">{contributions} contributions </h4>
+          <div className="tooltip__date">
+            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+          </div>
+        </div>
+      );
     else
-      return `30+ contributions\n${format(
-        parseISO(this.props.date),
-        "EEEE, MMMM d, yyyy"
-      )}`;
+      return (
+        <div className="tooltip">
+          <span className="tooltip__title">30+ contributions</span>
+          <span className="tooltip__date">
+            {format(parseISO(date), "EEEE, MMMM d, yyyy")}
+          </span>
+        </div>
+      );
   }
 
-  private handleClick = () => {
+  private handleDayClick = () => {
     this.setState((prevState) => ({
-      isClicked: !prevState.isClicked,
+      selected: !prevState.selected,
     }));
   };
 
   public render(): JSX.Element {
+    const { selected } = this.state;
     const color = this.getColor();
-    const tooltipText = this.getTooltipText();
-    const { isClicked } = this.state;
 
     return (
       <div
-        className={`day ${isClicked ? "clicked" : ""}`}
+        className={`day ${selected ? "selected" : ""}`}
         style={{ backgroundColor: color }}
-        onClick={this.handleClick}
+        onClick={this.handleDayClick}
       >
-        <span className="tooltiptext">{tooltipText}</span>
+        <div className="tooltiptext">{this.getTooltipText()}</div>
       </div>
     );
   }
@@ -81,34 +89,88 @@ interface ContributionGraphProps {
 }
 
 class ContributionGraph extends React.Component<ContributionGraphProps> {
-  public renderGraph(): JSX.Element[] {
+  private renderGraph(): JSX.Element[] {
     const { data } = this.props;
     const today = new Date();
-    const endDate = new Date(today.getTime() - 50 * 7 * 24 * 60 * 60 * 1000); // 50 weeks ago
+    const daysToShow = 50;
+    const startDate = new Date(
+      today.getTime() - daysToShow * 7 * 24 * 60 * 60 * 1000
+    );
 
-    const days: JSX.Element[] = [];
+    const weeks: JSX.Element[][] = [];
     let currentDate = new Date(today);
 
-    while (currentDate >= endDate) {
-      const formattedDate = format(currentDate, "yyyy-MM-dd");
-      const contributions = data[formattedDate] || 0;
+    while (currentDate >= startDate) {
+      const week: JSX.Element[] = [];
+      for (let i = 0; i < 7; i++) {
+        const formattedDate = format(currentDate, "yyyy-MM-dd");
+        const contributions = data[formattedDate] || 0;
 
-      days.push(
-        <ContributionDay
-          key={formattedDate}
-          date={formattedDate}
-          contributions={contributions}
-        />
-      );
+        week.push(
+          <ContributionDay
+            key={formattedDate}
+            date={formattedDate}
+            contributions={contributions}
+          />
+        );
 
-      currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+        currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+      }
+
+      weeks.push(week.reverse());
     }
 
-    return days.reverse();
+    return weeks.reverse().map((week, weekIndex) => (
+      <div key={weekIndex} className="contribution-week">
+        {week.map((day, dayIndex) => (
+          <div key={dayIndex} className="contribution-day">
+            {day}
+          </div>
+        ))}
+      </div>
+    ));
+  }
+
+  private renderMonthHeaders(): JSX.Element[] {
+    const monthHeaders: JSX.Element[] = [];
+
+    for (let i = 0; i < 12; i++) {
+      const month = format(new Date(0, i, 0), "MMM");
+      monthHeaders.push(
+        <div key={month} className="month-header">
+          {month}
+        </div>
+      );
+    }
+
+    return monthHeaders;
+  }
+
+  private renderWeekLabels(): JSX.Element[] {
+    const weekLabels: JSX.Element[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const day = format(new Date(0, 0, i + 6), "EEE");
+      weekLabels.push(
+        <div key={day} className="week-label">
+          {day}
+        </div>
+      );
+    }
+
+    return weekLabels;
   }
 
   public render(): JSX.Element {
-    return <div className="contribution-graph">{this.renderGraph()}</div>;
+    return (
+      <>
+        <div className="month-headers">{this.renderMonthHeaders()}</div>
+        <div className="contribution-graph-container">
+          <div className="week-labels">{this.renderWeekLabels()}</div>
+          <div className="contribution-graph">{this.renderGraph()}</div>
+        </div>
+      </>
+    );
   }
 }
 

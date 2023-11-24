@@ -1,4 +1,3 @@
-// src/App.tsx
 import React, { useEffect, useState } from "react";
 import ContributionGraph from "./components/ContributionGraph/ContributionGraph";
 import axios from "axios";
