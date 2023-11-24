@@ -1,4 +1,3 @@
-// ContributionGraph.tsx
 import React from "react";
 import { format, parseISO } from "date-fns";
 import "./ContributionGraph.css";
@@ -133,43 +132,44 @@ class ContributionGraph extends React.Component<ContributionGraphProps> {
   }
 
   private renderMonthHeaders(): JSX.Element[] {
-    const today = new Date();
-    const daysToShow = 50;
-    const startDate = new Date(
-      today.getTime() - daysToShow * 7 * 24 * 60 * 60 * 1000
-    );
-
     const monthHeaders: JSX.Element[] = [];
-    let currentDate = new Date(today);
 
-    while (currentDate >= startDate) {
-      const monthStart = new Date(
-        currentDate.getFullYear(),
-        currentDate.getMonth(),
-        1
+    for (let i = 0; i < 12; i++) {
+      const month = format(new Date(0, i, 0), "MMM");
+      monthHeaders.push(
+        <div key={month} className="month-header">
+          {month}
+        </div>
       );
-
-      if (currentDate.getTime() === monthStart.getTime()) {
-        const formattedMonth = format(currentDate, "MMMM yyyy");
-        monthHeaders.push(
-          <div key={formattedMonth} className="month-header">
-            {formattedMonth}
-          </div>
-        );
-      }
-
-      currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    return monthHeaders.reverse();
+    return monthHeaders;
+  }
+
+  private renderWeekLabels(): JSX.Element[] {
+    const weekLabels: JSX.Element[] = [];
+
+    for (let i = 0; i < 7; i++) {
+      const day = format(new Date(0, 0, i + 6), "EEE");
+      weekLabels.push(
+        <div key={day} className="week-label">
+          {day}
+        </div>
+      );
+    }
+
+    return weekLabels;
   }
 
   public render(): JSX.Element {
     return (
-      <div className="contribution-graph">
-        {this.renderMonthHeaders()}
-        {this.renderGraph()}
-      </div>
+      <>
+        <div className="month-headers">{this.renderMonthHeaders()}</div>
+        <div className="contribution-graph-container">
+          <div className="week-labels">{this.renderWeekLabels()}</div>
+          <div className="contribution-graph">{this.renderGraph()}</div>
+        </div>
+      </>
     );
   }
 }
