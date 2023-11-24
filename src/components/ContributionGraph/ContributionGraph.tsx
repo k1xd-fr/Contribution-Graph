@@ -93,39 +93,84 @@ class ContributionGraph extends React.Component<ContributionGraphProps> {
   private renderGraph(): JSX.Element[] {
     const { data } = this.props;
     const today = new Date();
-    const endDate = new Date(today.getTime() - 50 * 7 * 24 * 60 * 60 * 1000);
-
-    const days: JSX.Element[] = [];
-    let currentDate = new Date(today);
-
-    days.push(
-      <ContributionDay
-        key="today"
-        date={format(today, "yyyy-MM-dd")}
-        contributions={data[format(today, "yyyy-MM-dd")] || 0}
-      />
+    const daysToShow = 50;
+    const startDate = new Date(
+      today.getTime() - daysToShow * 7 * 24 * 60 * 60 * 1000
     );
 
-    while (currentDate > endDate) {
-      const formattedDate = format(currentDate, "yyyy-MM-dd");
-      const contributions = data[formattedDate] || 0;
+    const weeks: JSX.Element[][] = [];
+    let currentDate = new Date(today);
 
-      days.push(
-        <ContributionDay
-          key={formattedDate}
-          date={formattedDate}
-          contributions={contributions}
-        />
+    while (currentDate >= startDate) {
+      const week: JSX.Element[] = [];
+      for (let i = 0; i < 7; i++) {
+        const formattedDate = format(currentDate, "yyyy-MM-dd");
+        const contributions = data[formattedDate] || 0;
+
+        week.push(
+          <ContributionDay
+            key={formattedDate}
+            date={formattedDate}
+            contributions={contributions}
+          />
+        );
+
+        currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
+      }
+
+      weeks.push(week.reverse());
+    }
+
+    return weeks.reverse().map((week, weekIndex) => (
+      <div key={weekIndex} className="contribution-week">
+        {week.map((day, dayIndex) => (
+          <div key={dayIndex} className="contribution-day">
+            {day}
+          </div>
+        ))}
+      </div>
+    ));
+  }
+
+  private renderMonthHeaders(): JSX.Element[] {
+    const today = new Date();
+    const daysToShow = 50;
+    const startDate = new Date(
+      today.getTime() - daysToShow * 7 * 24 * 60 * 60 * 1000
+    );
+
+    const monthHeaders: JSX.Element[] = [];
+    let currentDate = new Date(today);
+
+    while (currentDate >= startDate) {
+      const monthStart = new Date(
+        currentDate.getFullYear(),
+        currentDate.getMonth(),
+        1
       );
+
+      if (currentDate.getTime() === monthStart.getTime()) {
+        const formattedMonth = format(currentDate, "MMMM yyyy");
+        monthHeaders.push(
+          <div key={formattedMonth} className="month-header">
+            {formattedMonth}
+          </div>
+        );
+      }
 
       currentDate = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
     }
 
-    return days.reverse();
+    return monthHeaders.reverse();
   }
 
   public render(): JSX.Element {
-    return <div className="contribution-graph">{this.renderGraph()}</div>;
+    return (
+      <div className="contribution-graph">
+        {this.renderMonthHeaders()}
+        {this.renderGraph()}
+      </div>
+    );
   }
 }
 
