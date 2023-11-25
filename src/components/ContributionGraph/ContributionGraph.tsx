@@ -150,7 +150,7 @@ class ContributionGraph extends React.Component<ContributionGraphProps> {
     const weekLabels: JSX.Element[] = [];
 
     for (let i = 0; i < 7; i++) {
-      const day = format(new Date(0, 0, i + 6), "EEE");
+      const day = format(new Date(0, 0, i + 7), "EEE");
       weekLabels.push(
         <div key={day} className="week-label">
           {day}
