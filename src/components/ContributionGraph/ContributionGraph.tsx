@@ -100,6 +100,10 @@ class ContributionGraph extends React.Component<ContributionGraphProps> {
     const weeks: JSX.Element[][] = [];
     let currentDate = new Date(today);
 
+    const daysInMonth = (year: number, month: number): number => {
+      return new Date(year, month + 1, 0).getDate();
+    };
+
     while (currentDate >= startDate) {
       const week: JSX.Element[] = [];
       for (let i = 0; i < 7; i++) {
@@ -120,10 +124,29 @@ class ContributionGraph extends React.Component<ContributionGraphProps> {
       weeks.push(week.reverse());
     }
 
+    const weeksPerMonth: number[] = [];
+    const firstDayOfMonth = new Date(startDate);
+    while (firstDayOfMonth <= today) {
+      const daysInCurrentMonth = daysInMonth(
+        firstDayOfMonth.getFullYear(),
+        firstDayOfMonth.getMonth()
+      );
+      const remainingDaysInMonth =
+        daysInCurrentMonth - firstDayOfMonth.getDate() + 1;
+      const weeksInMonth = Math.ceil(remainingDaysInMonth / 7);
+      weeksPerMonth.push(weeksInMonth);
+      firstDayOfMonth.setMonth(firstDayOfMonth.getMonth() + 1);
+    }
+
     return weeks.reverse().map((week, weekIndex) => (
       <div key={weekIndex} className="contribution-week">
         {week.map((day, dayIndex) => (
-          <div key={dayIndex} className="contribution-day">
+          <div
+            key={dayIndex}
+            className={`contribution-day ${
+              dayIndex < weeksPerMonth[weekIndex] * 7 ? "" : "hidden"
+            }`}
+          >
             {day}
           </div>
         ))}
